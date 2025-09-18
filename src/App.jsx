@@ -47,54 +47,43 @@ export default function InstantMedicalReportGenerator() {
   };
 
   async function downloadPDF() {
-  if (!form.patientName || !form.patientId) {
-    alert("Please enter the patient's name and ID before downloading.");
-    return;
-  }
-
-  if (!previewRef.current) {
-    console.error("Preview element not found.");
-    return;
-  }
-
-  setLoadingPdf(true);
-  try {
-    const node = previewRef.current;
-    const scale = 2;
-    const canvas = await html2canvas(node, {
-      scale: scale,
-      useCORS: true,
-      scrollY: -window.scrollY,
-    });
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.7);
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    // Only add a new page if there's a significant amount of content left.
-    // The threshold of 15 is to prevent a blank second page from being generated.
-    while (heightLeft > 15) { 
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    if (!form.patientName || !form.patientId) {
+      alert("Please enter the patient's name and ID before downloading.");
+      return;
     }
 
-    pdf.save(`medical_report_${form.patientId || "sample"}.pdf`);
-  } catch (err) {
-    console.error("PDF export failed:", err);
-    alert("Could not export PDF. Please check the console for details.");
-  } finally {
-    setLoadingPdf(false);
+    if (!previewRef.current) {
+      console.error("Preview element not found.");
+      return;
+    }
+
+    setLoadingPdf(true);
+    try {
+      const node = previewRef.current;
+      const scale = 2;
+      const canvas = await html2canvas(node, {
+        scale: scale,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.7);
+      const pdf = new jsPDF({
+        unit: "pt",
+        format: "a4",
+      });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+
+      pdf.save(`medical_report_${form.patientId || "sample"}.pdf`);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      alert("Could not export PDF. Please check the console for details.");
+    } finally {
+      setLoadingPdf(false);
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col gap-6">

@@ -92,7 +92,7 @@ textarea,
 select {
   background-color: white !important;
   color: black !important;
-  border: 1px solid #ccc;
+  border: 1px solid #ccc; 
 }
 
 /* Table styles */
@@ -103,8 +103,8 @@ select {
 }
 
 .report-table td {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 8px 0;
+  border: none;
   vertical-align: top;
 }
 
