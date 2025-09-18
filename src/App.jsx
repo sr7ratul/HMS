@@ -27,8 +27,6 @@ export default function InstantMedicalReportGenerator() {
     investigationTest: "",
     investigationResult: "",
     impression: "",
-    planPrescription: "",
-    planFollowUp: "",
   });
 
   const previewRef = useRef(null);
@@ -49,42 +47,54 @@ export default function InstantMedicalReportGenerator() {
   };
 
   async function downloadPDF() {
-    if (!form.patientName || !form.patientId) {
-      alert("Please enter the patient's name and ID before downloading.");
-      return;
-    }
-
-    if (!previewRef.current) {
-      console.error("Preview element not found.");
-      return;
-    }
-
-    setLoadingPdf(true);
-    try {
-      const node = previewRef.current;
-      const scale = 2;
-      const canvas = await html2canvas(node, {
-        scale: scale,
-        useCORS: true,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        unit: "pt",
-        format: "a4",
-      });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`medical_report_${form.patientId || "sample"}.pdf`);
-    } catch (err) {
-      console.error("PDF export failed:", err);
-      alert("Could not export PDF. Please check the console for details.");
-    } finally {
-      setLoadingPdf(false);
-    }
+  if (!form.patientName || !form.patientId) {
+    alert("Please enter the patient's name and ID before downloading.");
+    return;
   }
+
+  if (!previewRef.current) {
+    console.error("Preview element not found.");
+    return;
+  }
+
+  setLoadingPdf(true);
+  try {
+    const node = previewRef.current;
+    const scale = 2;
+    const canvas = await html2canvas(node, {
+      scale: scale,
+      useCORS: true,
+      scrollY: -window.scrollY,
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.7);
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Only add a new page if there's a significant amount of content left.
+    // The threshold of 15 is to prevent a blank second page from being generated.
+    while (heightLeft > 15) { 
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(`medical_report_${form.patientId || "sample"}.pdf`);
+  } catch (err) {
+    console.error("PDF export failed:", err);
+    alert("Could not export PDF. Please check the console for details.");
+  } finally {
+    setLoadingPdf(false);
+  }
+}
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col gap-6">
@@ -155,12 +165,7 @@ export default function InstantMedicalReportGenerator() {
             {/* 7. Assessment / Impression */}
             <h3 className="text-lg font-semibold">7. Assessment / Impression</h3>
             <Textarea label="Provisional Diagnosis" value={form.impression} onChange={(v) => updateField("impression", v)} />
-
-            {/* 8. Plan / Treatment */}
-            <h3 className="text-lg font-semibold">8. Plan / Treatment</h3>
-            <Textarea label="Prescription / Advice" value={form.planPrescription} onChange={(v) => updateField("planPrescription", v)} />
-            <Input label="Follow-up Date" type="date" value={form.planFollowUp} onChange={(v) => updateField("planFollowUp", v)} />
-
+            
             <div className="flex gap-2 mt-4">
               <button
                 onClick={downloadPDF}
@@ -193,80 +198,132 @@ export default function InstantMedicalReportGenerator() {
                         <p>{form.address}</p>
                         <p>{form.phone}</p>
                       </div>
-                      <div className="patient-info text-right">
+                      <div className="patient-info">
                         <p>Report date: {form.reportDate}</p>
                         <p>Ref: {form.referring}</p>
                       </div>
                     </header>
                     <hr className="my-3" />
-                    <section className="mb-3">
-                      <div className="flex justify-between">
-                        <div>
-                          <div><strong>Patient:</strong> {form.patientName}</div>
-                          <div><strong>ID:</strong> {form.patientId}</div>
-                        </div>
-                        <div className="text-right">
-                          <div><strong>DOB:</strong> {form.dob}</div>
-                          <div><strong>Sex:</strong> {form.sex}</div>
-                        </div>
-                      </div>
-                    </section>
                     
-                    {/* 1. Chief Complaint */}
-                    <section className="report-section">
-                      <h4>1. Chief Complaint</h4>
-                      <p><strong>Problem:</strong> {form.ccProblem}</p>
-                      <p><strong>Duration:</strong> {form.ccDuration}</p>
-                    </section>
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">Patient Information</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="w-1/2"><strong>Patient:</strong> {form.patientName}</td>
+                                <td className="w-1/2"><strong>ID:</strong> {form.patientId}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DOB:</strong> {form.dob}</td>
+                                <td><strong>Sex:</strong> {form.sex}</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                    {/* 2. Present Illness History */}
-                    <section className="report-section">
-                      <h4>2. Present Illness History</h4>
-                      <p><strong>Onset:</strong> {form.hpiOnset}</p>
-                      <p><strong>Severity:</strong> {form.hpiSeverity}</p>
-                      <p><strong>Extra Symptoms:</strong> {form.hpiExtraSymptoms}</p>
-                    </section>
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">1. Chief Complaint</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="w-1/2"><strong>Problem:</strong> {form.ccProblem}</td>
+                                <td className="w-1/2"><strong>Duration:</strong> {form.ccDuration}</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                    {/* 3. Past History */}
-                    <section className="report-section">
-                      <h4>3. Past History</h4>
-                      <p><strong>Chronic Illness:</strong> {form.pastChronic.join(", ") || "None"}</p>
-                      <p><strong>Allergies:</strong> {form.pastAllergies || "None"}</p>
-                    </section>
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">2. Present Illness History</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="w-1/2"><strong>Onset:</strong> {form.hpiOnset}</td>
+                                <td className="w-1/2"><strong>Severity:</strong> {form.hpiSeverity}</td>
+                            </tr>
+                            <tr>
+                                <td colSpan="2"><strong>Extra Symptoms:</strong> {form.hpiExtraSymptoms}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">3. Past History</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="w-1/2"><strong>Chronic Illness:</strong> {form.pastChronic.join(", ") || "None"}</td>
+                                <td className="w-1/2"><strong>Allergies:</strong> {form.pastAllergies || "None"}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">4. Current Medications</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colSpan="2">{form.medications || "N/A"}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">5. Examination</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colSpan="2"><strong>Vitals:</strong> {form.examVitals || "N/A"}</td>
+                            </tr>
+                            <tr>
+                                <td colSpan="2"><strong>General Findings:</strong> {form.examGeneral}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                     
-                    {/* 4. Current Medications */}
-                    <section className="report-section">
-                      <h4>4. Current Medications</h4>
-                      <p>{form.medications || "N/A"}</p>
-                    </section>
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">6. Investigations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="w-1/2"><strong>Test Name:</strong> {form.investigationTest}</td>
+                                <td className="w-1/2"><strong>Result:</strong> {form.investigationResult}</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                    {/* 5. Examination */}
-                    <section className="report-section">
-                      <h4>5. Examination</h4>
-                      <p><strong>Vitals:</strong> {form.examVitals || "N/A"}</p>
-                      <p><strong>General Findings:</strong> {form.examGeneral}</p>
-                    </section>
-
-                    {/* 6. Investigations */}
-                    <section className="report-section">
-                      <h4>6. Investigations</h4>
-                      <p><strong>Test Name:</strong> {form.investigationTest}</p>
-                      <p><strong>Result:</strong> {form.investigationResult}</p>
-                    </section>
-
-                    {/* 7. Assessment / Impression */}
-                    <section className="report-section">
-                      <h4>7. Assessment / Impression</h4>
-                      <p><strong>Provisional Diagnosis:</strong> {form.impression}</p>
-                    </section>
-
-                    {/* 8. Plan / Treatment */}
-                    <section className="report-section">
-                      <h4>8. Plan / Treatment</h4>
-                      <p><strong>Prescription / Advice:</strong> {form.planPrescription}</p>
-                      <p><strong>Follow-up Date:</strong> {form.planFollowUp}</p>
-                    </section>
-
+                    <table className="report-table">
+                        <thead className="table-header">
+                            <tr>
+                                <th colSpan="2">7. Assessment / Impression</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colSpan="2"><strong>Provisional Diagnosis:</strong> {form.impression}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
                     <footer className="report-footer">
                       <div className="doctor-info">
                         <strong>Examined by:</strong>
