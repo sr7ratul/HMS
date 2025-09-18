@@ -1,4 +1,6 @@
 import React, { useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 export default function InstantMedicalReportGenerator() {
   const [form, setForm] = useState({
@@ -46,27 +48,26 @@ export default function InstantMedicalReportGenerator() {
     if (!previewRef.current) return;
     setLoadingPdf(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
-
       const node = previewRef.current;
 
       // increase scale for better resolution
       const canvas = await html2canvas(node, {
-      scale: 3,
-      useCORS: true,
-      scrollY: -window.scrollY,
-      width: node.scrollWidth,
-      height: node.scrollHeight
-    });
+        scale: 3,
+        useCORS: true,
+        scrollY: -window.scrollY,
+        width: node.scrollWidth,
+        height: node.scrollHeight,
+        logging: false,
+      });
 
       const imgData = canvas.toDataURL("image/png");
 
       // PDF size matches canvas
-     const pdf = new jsPDF({
-     unit: "pt",
-      format: [canvas.width, canvas.height]
-    });
+      const pdf = new jsPDF({
+        unit: "pt",
+        format: [canvas.width, canvas.height],
+      });
+
       pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
       pdf.save(`medical_report_${form.patientId || "sample"}.pdf`);
     } catch (err) {
@@ -82,30 +83,102 @@ export default function InstantMedicalReportGenerator() {
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: form */}
         <div className="col-span-1 bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-2xl font-semibold mb-3">Instant Report Generator</h2>
+          <h2 className="text-2xl font-semibold mb-3">
+            Instant Report Generator
+          </h2>
           <p className="text-sm text-gray-500 mb-4">
             Fill fields, preview on right, then download PDF.
           </p>
 
           <div className="space-y-3 max-h-[70vh] overflow-auto pr-2">
-            <Input label="Hospital / Clinic" value={form.hospital} onChange={(v) => updateField("hospital", v)} />
-            <Input label="Address" value={form.address} onChange={(v) => updateField("address", v)} />
-            <Input label="Phone" value={form.phone} onChange={(v) => updateField("phone", v)} />
-            <Input label="Patient name" value={form.patientName} onChange={(v) => updateField("patientName", v)} />
-            <Input label="Patient ID" value={form.patientId} onChange={(v) => updateField("patientId", v)} />
-            <Input label="Date of birth" type="date" value={form.dob} onChange={(v) => updateField("dob", v)} />
-            <Input label="Sex" value={form.sex} onChange={(v) => updateField("sex", v)} />
-            <Input label="Report date" type="date" value={form.reportDate} onChange={(v) => updateField("reportDate", v)} />
-            <Input label="Referring physician" value={form.referring} onChange={(v) => updateField("referring", v)} />
+            <Input
+              label="Hospital / Clinic"
+              value={form.hospital}
+              onChange={(v) => updateField("hospital", v)}
+            />
+            <Input
+              label="Address"
+              value={form.address}
+              onChange={(v) => updateField("address", v)}
+            />
+            <Input
+              label="Phone"
+              value={form.phone}
+              onChange={(v) => updateField("phone", v)}
+            />
+            <Input
+              label="Patient name"
+              value={form.patientName}
+              onChange={(v) => updateField("patientName", v)}
+            />
+            <Input
+              label="Patient ID"
+              value={form.patientId}
+              onChange={(v) => updateField("patientId", v)}
+            />
+            <Input
+              label="Date of birth"
+              type="date"
+              value={form.dob}
+              onChange={(v) => updateField("dob", v)}
+            />
+            <Input
+              label="Sex"
+              value={form.sex}
+              onChange={(v) => updateField("sex", v)}
+            />
+            <Input
+              label="Report date"
+              type="date"
+              value={form.reportDate}
+              onChange={(v) => updateField("reportDate", v)}
+            />
+            <Input
+              label="Referring physician"
+              value={form.referring}
+              onChange={(v) => updateField("referring", v)}
+            />
 
-            <Textarea label="Chief complaint" value={form.chief} onChange={(v) => updateField("chief", v)} />
-            <Textarea label="History of present illness" value={form.history} onChange={(v) => updateField("history", v)} />
-            <Textarea label="Past medical history" value={form.pmh} onChange={(v) => updateField("pmh", v)} />
-            <Textarea label="Medications" value={form.meds} onChange={(v) => updateField("meds", v)} />
-            <Textarea label="Examination" value={form.exam} onChange={(v) => updateField("exam", v)} />
-            <Textarea label="Investigations" value={form.investigations} onChange={(v) => updateField("investigations", v)} />
-            <Textarea label="Assessment / Impression" value={form.impression} onChange={(v) => updateField("impression", v)} />
-            <Textarea label="Plan / Treatment" value={form.plan} onChange={(v) => updateField("plan", v)} />
+            <Textarea
+              label="Chief complaint"
+              value={form.chief}
+              onChange={(v) => updateField("chief", v)}
+            />
+            <Textarea
+              label="History of present illness"
+              value={form.history}
+              onChange={(v) => updateField("history", v)}
+            />
+            <Textarea
+              label="Past medical history"
+              value={form.pmh}
+              onChange={(v) => updateField("pmh", v)}
+            />
+            <Textarea
+              label="Medications"
+              value={form.meds}
+              onChange={(v) => updateField("meds", v)}
+            />
+            <Textarea
+              label="Examination"
+              value={form.exam}
+              onChange={(v) => updateField("exam", v)}
+            />
+            <Textarea
+              label="Investigations"
+              value={form.investigations}
+              onChange={(v) => updateField("investigations", v)}
+            />
+            <Textarea
+              label="Assessment / Impression"
+              value={form.impression}
+              onChange={(v) => updateField("impression", v)}
+            />
+            <Textarea
+              label="Plan / Treatment"
+              value={form.plan}
+              onChange={(v) => updateField("plan", v)}
+            />
 
             <div className="flex gap-2 mt-2">
               <button
@@ -129,7 +202,8 @@ export default function InstantMedicalReportGenerator() {
             </div>
 
             <p className="text-xs text-gray-500 mt-2">
-              Output will contain the word "SAMPLE". Do not use for official/medical/legal purposes.
+              Output will contain the word "SAMPLE". Do not use for
+              official/medical/legal purposes.
             </p>
           </div>
         </div>
@@ -139,7 +213,9 @@ export default function InstantMedicalReportGenerator() {
           <div className="bg-white rounded-2xl p-6 shadow-md">
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-xl font-medium">Report Preview</h3>
-              <div className="text-sm text-gray-500">Paper A4 preview — use Download PDF to export</div>
+              <div className="text-sm text-gray-500">
+                Paper A4 preview — use Download PDF to export
+              </div>
             </div>
 
             <div className="flex gap-4">
@@ -157,7 +233,7 @@ export default function InstantMedicalReportGenerator() {
                   </div>
 
                   <div className="relative z-10">
-                    {/* Report content same as before */}
+                    {/* Report content */}
                     {/* ... (অন্য অংশ অপরিবর্তিত) */}
                   </div>
                 </div>
@@ -165,7 +241,8 @@ export default function InstantMedicalReportGenerator() {
             </div>
 
             <div className="mt-4 text-xs text-gray-500">
-              Tip: For higher-fidelity printing you can increase the page scale in the PDF export code or use server-side HTML-to-PDF tools.
+              Tip: For higher-fidelity printing you can increase the page scale
+              in the PDF export code or use server-side HTML-to-PDF tools.
             </div>
           </div>
         </div>
