@@ -54,7 +54,7 @@ export default function InstantMedicalReportGenerator() {
       const canvas = await html2canvas(node, {
         scale: 3,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
         scrollY: -window.scrollY,
         width: node.scrollWidth,
         height: node.scrollHeight,
