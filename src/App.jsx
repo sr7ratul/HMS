@@ -37,7 +37,7 @@ export default function InstantMedicalReportGenerator() {
   function autoFillAndGenerate(autoDownload = false) {
     setForm((s) => ({ ...s }));
     if (autoDownload) {
-      setTimeout(() => downloadPDF(), 400);
+      setTimeout(() => downloadPDF(), 2000);
     }
   }
 
@@ -54,6 +54,7 @@ export default function InstantMedicalReportGenerator() {
       const canvas = await html2canvas(node, {
         scale: 3,
         useCORS: true,
+        allowTaint: true
         scrollY: -window.scrollY,
         width: node.scrollWidth,
         height: node.scrollHeight,
